@@ -1,0 +1,466 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7th CPC Pay Fixation Calculator</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: linear-gradient(to bottom, #e6f3ff, #b3d9ff); color: #222; }
+  h2 { text-align: center; margin-bottom: 10px; color: #003087; }
+  .header { display: flex; align-items: center; justify-content: center; gap: 20px; }
+  .header img { max-width: 80px; }
+  .top-section { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+  .block { background: #e6e6fa; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); flex: 1; min-width: 260px; }
+  label { display: block; margin-top: 6px; font-weight: 600; color: #003087; }
+  select, input { width: 100%; padding: 5px; margin-top: 3px; border: 1px solid #4682b4; border-radius: 4px; }
+  .hidden { display: none; }
+  .matrix-container { display: flex; justify-content: space-around; gap: 20px; margin-top: 15px; flex-wrap: wrap; display: none; }
+  .matrix-toggle { margin: 10px 0; text-align: center; }
+  .matrix-toggle button { padding: 8px 16px; background: #4682b4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  .matrix-toggle button:hover { background: #003087; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 13px; }
+  th, td { border: 1px solid #ccc; text-align: center; padding: 4px; }
+  th { background: #b0c4de; color: #00008b; }
+  .pay-details { background: #f0f8ff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  .additional-tables { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 40px; }
+  .additional-table { background: #e6e6fa; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  .additional-table h3 { color: #ff4500; }
+  .additional-table table { font-size: 16px; }
+  .additional-table th, .additional-table td { padding: 8px; background: #f0fff0; }
+  .pay-change-row td { background: #b0e0e6; font-style: italic; }
+  .comparison-section { margin-top: 40px; padding: 15px; background: #f5f5f5; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  .comparison-section h3 { color: #228b22; text-align: center; }
+  .comparison-table th, .comparison-table td { padding: 8px; }
+  .comparison-table .highlight { background: #90ee90; font-weight: bold; }
+  .comparison-text { text-align: center; margin-top: 10px; color: #006400; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="header">
+  <img src="https://www.wr.indianrailways.gov.in/images/logo.png" alt="Western Railway Logo">
+  <h2>7th CPC Pay Fixation Calculator - Western Railway</h2>
+</div>
+
+<div class="top-section">
+  <div class="block">
+    <label>Old Level Pay Matrix</label>
+    <select id="oldLevel"></select>
+    <label>Revised Level Pay Matrix</label>
+    <select id="newLevel"></select>
+  </div>
+
+  <div class="block">
+    <label>Last Increment Date (Date 1)</label>
+    <input type="date" id="date1">
+    <label>Promotion Date (Date 2)</label>
+    <input type="date" id="date2">
+    <label class="hidden">Next Increment Date (Date 3)</label>
+    <input type="text" id="date3" class="hidden" readonly>
+    <label class="hidden">Next Cycle (Date 4)</label>
+    <input type="text" id="date4" class="hidden" readonly>
+  </div>
+</div>
+
+<div class="matrix-toggle">
+  <button onclick="toggleMatrix()">Show Matrix</button>
+</div>
+
+<div class="pay-details">
+  <h3>💰 Pay Details</h3>
+  <label>Basic Pay (Old)</label>
+  <input type="number" id="basicOld">
+
+  <label class="hidden">Revised Basic Pay (Auto)</label>
+  <input type="text" id="basicNew" class="hidden" readonly>
+
+  <div class="matrix-container" id="matrixContainer">
+    <div>
+      <h4>Old Level Matrix</h4>
+      <table id="oldMatrixTable"></table>
+    </div>
+    <div>
+      <h4>Revised Level Matrix</h4>
+      <table id="newMatrixTable"></table>
+    </div>
+  </div>
+</div>
+
+<div class="additional-tables">
+  <div class="additional-table">
+    <h3 id="table1Header">Table-1</h3>
+    <table>
+      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
+      <tbody id="table1Body"></tbody>
+    </table>
+  </div>
+  <div class="additional-table">
+    <h3 id="table2Header">Table-2</h3>
+    <table>
+      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
+      <tbody id="table2Body"></tbody>
+    </table>
+  </div>
+  <div class="additional-table">
+    <h3 id="table3Header">Table-3</h3>
+    <table>
+      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
+      <tbody id="table3Body"></tbody>
+    </table>
+  </div>
+  <div class="additional-table">
+    <h3 id="table4Header">Table-4</h3>
+    <table>
+      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
+      <tbody id="table4Body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="comparison-section">
+  <h3>Pay Fixation Comparison</h3>
+  <table class="comparison-table">
+    <thead><tr><th>Option</th><th>Final Revised Basic Pay</th><th>Benefit Indicator</th></tr></thead>
+    <tbody id="comparisonBody"></tbody>
+  </table>
+  <div class="comparison-text" id="comparisonText"></div>
+</div>
+
+<script>
+/* ---------- PAY MATRIX DATA (LEVEL 1 TO 15) ---------- */
+const payMatrix = {
+1:[18000,18500,19100,19700,20300,20900,21500,22100,22800,23500,24200,24900,25600,26400,27200,28000,28800,29700,30600,31500,32400,33400,34400,35400,36500,37600,38700,39900,41100,42300,43600,44900,46200,47600,49000,50500,52000,53600,55200,56900],
+2:[19900,20500,21100,21700,22400,23100,23800,24500,25200,26000,26800,27600,28400,29300,30200,31100,32000,33000,34000,35000,36100,37200,38300,39400,40600,41800,43100,44400,45700,47100,48500,50000,51500,53000,54600,56200,57900,59600,61400,63200],
+3:[21700,22400,23100,23800,24500,25200,26000,26800,27600,28400,29300,30200,31100,32000,33000,34000,35000,36100,37200,38300,39400,40600,41800,43100,44400,45700,47100,48500,50000,51500,53000,54600,56200,57900,59600,61400,63200,65100,67100,69100],
+4:[25500,26300,27100,27900,28700,29600,30500,31400,32300,33300,34300,35300,36400,37500,38600,39800,41000,42200,43500,44800,46100,47500,48900,50400,51900,53500,55100,56800,58500,60300,62100,64000,65900,67900,69900,72000,74200,76400,78700,81100],
+5:[29200,30100,31000,31900,32900,33900,34900,35900,37000,38100,39200,40400,41600,42800,44100,45400,46800,48200,49600,51100,52600,54200,55800,57500,59200,61000,62800,64700,66600,68600,70700,72800,75000,77300,79600,82000,84500,87000,89600,92300],
+6:[35400,36500,37600,38700,39900,41100,42300,43600,44900,46200,47600,49000,50500,52000,53600,55200,56900,58600,60400,62200,64100,66000,68000,70000,72100,74300,76500,78800,81200,83600,86100,88700,91400,94100,96900,99800,102800,105900,109100,112400],
+7:[44900,46200,47600,49000,50500,52000,53600,55200,56900,58600,60400,62200,64100,66000,68000,70000,72100,74300,76500,78800,81200,83600,86100,88700,91400,94100,96900,99800,102800,105900,109100,112400,115800,119300,122900,126600,130400,134300,138300,142400],
+8:[47600,49000,50500,52000,53600,55200,56900,58600,60400,62200,64100,66000,68000,70000,72100,74300,76500,78800,81200,83600,86100,88700,91400,94100,96900,99800,102800,105900,109100,112400,115800,119300,122900,126600,130400,134300,138300,142400,146700,151100],
+9:[53100,54700,56300,58000,59700,61500,63300,65200,67200,69200,71300,73400,75600,77900,80200,82600,85100,87700,90300,93000,95800,98700,101700,104800,107900,111100,114400,117800,121300,124900,128600,132500,136500,140600,144800,149100,153600,158200,162900,167800],
+10:[56100,57800,59500,61300,63100,65000,67000,69000,71100,73200,75400,77700,80000,82400,84900,87400,90000,92700,95500,98400,101400,104400,107500,110700,114000,117400,120900,124500,128200,132000,136000,140100,144300,148600,152100,157700,162400,167300,172300,177500],
+11:[67700,69700,71800,74000,76200,78500,80900,83300,85800,88400,91100,93800,96600,99500,102500,105600,108800,112100,115500,119000,122600,126300,130100,134000,138000,142100,146400,150800,155300,160000,164800,169700,174800,180000,185400,191000,196700,202600,208700,214000],
+12:[78800,81200,83600,86100,88700,91400,94100,96900,99800,102800,105900,109100,112400,115800,119300,122900,126600,130400,134300,138300,142400,146700,151100,155600,160300,165100,170100,175200,180500,185900,191500,197200,203100,209200,215400,221800,228400,235200,242200,249500],
+13:[123100,126800,130600,134500,138500,142700,147000,151400,155900,160600,165400,170400,175500,180800,186200,191800,197600,203500,209600,215900,222400,229100,236000,243100,250400,258000,265800,273900,282200,290800,299700,308900,318400,328200,338300,348700,359400,370400,381700,393200],
+14:[144200,148500,153000,157600,162300,167200,172200,177400,182700,188200,193800,199600,205600,211800,218200,224900,231800,238900,246200,253800,261700,269900,278400,287200,296300,305700,315400,325500,335900,346600,357600,368900,380600,392600,404900,417600,430700,444200,458000,472200],
+15:[182200,187700,193300,199100,205100,211300,217600,224100,230800,237700,244800,252200,259900,267900,276200,284800,293700,302900,312400,322200,332400,343000,354000,365300,377000,389100,401600,414400,427600,441200,455100,469400,484100,499200,514700,530500,546700,563200,580100,597300]
+};
+
+/* ---------- INITIALISE DROPDOWNS ---------- */
+for (let i=1;i<=15;i++){
+  oldLevel.innerHTML += `<option value="${i}">Level ${i}</option>`;
+  newLevel.innerHTML += `<option value="${i}">Level ${i}</option>`;
+}
+
+/* ---------- TOGGLE MATRIX VISIBILITY ---------- */
+function toggleMatrix() {
+  const container = document.getElementById("matrixContainer");
+  const button = document.querySelector(".matrix-toggle button");
+  container.style.display = container.style.display === "none" ? "flex" : "none";
+  button.textContent = container.style.display === "none" ? "Show Matrix" : "Hide Matrix";
+}
+
+/* ---------- DISPLAY MATRIX ---------- */
+function showMatrix(level, tableId){
+  const arr = payMatrix[level];
+  let html = "<tr><th>Stage</th><th>Pay</th></tr>";
+  arr.forEach((p,i)=> html += `<tr><td>${i+1}</td><td>${p}</td></tr>`);
+  document.getElementById(tableId).innerHTML = html;
+}
+
+/* ---------- EVENT HANDLERS ---------- */
+oldLevel.addEventListener("change", ()=>{
+  showMatrix(oldLevel.value,"oldMatrixTable");
+  calculate();
+});
+newLevel.addEventListener("change", ()=>{
+  showMatrix(newLevel.value,"newMatrixTable");
+  calculate();
+});
+date1.addEventListener("change", calculate);
+date2.addEventListener("change", calculate);
+basicOld.addEventListener("input", calculate);
+
+function calculate(){
+  const d1 = new Date(date1.value);
+  const d2 = new Date(date2.value);
+  if(date1.value){
+    // Next increment = +1 year
+    const d3 = new Date(d1); d3.setFullYear(d3.getFullYear()+1);
+    date3.value = d3.toLocaleDateString('en-GB');
+  }
+  if(date2.value){
+    const month = d2.getMonth()+1;
+    const nextYear = d2.getFullYear()+1;
+    const nextCycle = (month>=1 && month<7) ?
+       new Date(nextYear,0,1) : new Date(nextYear,6,1);
+    date4.value = nextCycle.toLocaleDateString('en-GB');
+  }
+
+  const oldLvl = oldLevel.value, newLvl = newLevel.value;
+  const oldPay = Number(basicOld.value);
+  if(oldLvl && newLvl && oldPay){
+    const oldArr = payMatrix[oldLvl];
+    const newArr = payMatrix[newLvl];
+    // find next higher in new level for Table-1
+    const higher = newArr.find(v=>v>oldPay) || "";
+    basicNew.value = higher;
+    // Update table headers
+    const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const d3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
+    const d4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
+    const monthName = monthNames[d1.getMonth()];
+    const isSameMonthYear = (d3.getMonth() === d4.getMonth() && d3.getFullYear() === d4.getFullYear());
+    const suffix = isSameMonthYear ? "+6" : "-6";
+    const tableName = `${monthName}${suffix}/NO`;
+    document.getElementById("table1Header").textContent = tableName;
+    document.getElementById("table2Header").textContent = tableName;
+    document.getElementById("table3Header").textContent = tableName;
+    document.getElementById("table4Header").textContent = tableName;
+    fillTable1(d2, higher, newArr, oldPay, oldArr);
+    fillTable2(d2, newArr, oldPay, oldArr);
+    fillTable3(d2, newArr, oldPay, oldArr);
+    fillTable4(d2, newArr, oldPay, oldArr);
+    fillComparisonTable();
+  }
+}
+
+function addMonths(date, months){
+  const d = new Date(date); d.setMonth(d.getMonth()+months); return d;
+}
+
+function fillTable1(date2, revPay, newArr, oldPay, oldArr){
+  if(!date2 || !revPay) return;
+  const body = document.getElementById("table1Body");
+  body.innerHTML = "";
+  
+  // Row 1: Promotion on immediate
+  const row1 = `<tr><td>Promotion on immediate</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${revPay}</td></tr>`;
+  
+  // Row 2: 2 increment (1 promotion+1 regular), Date 3, Old Pay +2 in oldArr
+  const date3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
+  const oldIndex = oldArr.indexOf(oldPay);
+  const row2Pay = (oldIndex !== -1 && oldIndex + 2 < oldArr.length) 
+    ? oldArr[oldIndex + 2] 
+    : oldArr[oldArr.length - 1] || oldPay;
+  const row2 = `<tr><td>2 increment (1 promotion+1 regular)</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
+  
+  // Row 3: next level fix, same date as row2, pay: find >= row2Pay in newArr
+  const row3Pay = newArr.find(v => v >= row2Pay) || newArr[newArr.length - 1];
+  const row3 = `<tr><td>next level fix</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
+  
+  // Row 4: as per rules, row3 date +6 months, next after row3Pay
+  const row4Date = addMonths(date3, 6);
+  const row3Index = newArr.indexOf(row3Pay);
+  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
+    ? newArr[row3Index + 1] 
+    : row3Pay;
+  const row4 = `<tr><td>as per rules</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
+  
+  // Row 5: next as per year, row4 date +12 months, next after row4Pay
+  const row5Date = addMonths(row4Date, 12);
+  const row4Index = newArr.indexOf(row4Pay);
+  const row5Pay = (row4Index !== -1 && row4Index + 1 < newArr.length) 
+    ? newArr[row4Index + 1] 
+    : row4Pay;
+  const row5 = `<tr><td>next as per year</td><td>${row5Date.toLocaleDateString('en-GB')}</td><td>${row5Pay}</td></tr>`;
+  
+  // Additional Row: Pay Changes Details
+  const payChangeDetails = `Pay changes from old ${oldPay} to ${revPay} (immediate), then to ${row2Pay} (2 increments in old level), then fixed to ${row3Pay} (next level fix), then to ${row4Pay} (+6 months rule), then to ${row5Pay} (+12 months).`;
+  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
+  
+  body.innerHTML = row1 + row2 + row3 + row4 + row5 + payChangeRow;
+}
+
+function fillTable2(date2, newArr, oldPay, oldArr){
+  if(!date2) return;
+  const body = document.getElementById("table2Body");
+  body.innerHTML = "";
+  
+  // Row 1: Promotion on immediate with +1 increment
+  const oldIndexRow1 = oldArr.indexOf(oldPay);
+  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
+    ? oldArr[oldIndexRow1 + 1] 
+    : oldArr[oldArr.length - 1] || oldPay;
+  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td></tr>`;
+  
+  // Row 2: as per NO Option and new level fix, Date 2, find >= row1Pay in newArr
+  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
+  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
+  
+  // Row 3: Regular Increment, Date 4, next after row2Pay
+  const date4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
+  const row2Index = newArr.indexOf(row2Pay);
+  const row3Pay = (row2Index !== -1 && row2Index + 1 < newArr.length) 
+    ? newArr[row2Index + 1] 
+    : row2Pay;
+  const row3 = `<tr><td>Regular Increment</td><td>${date4.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
+  
+  // Row 4: Regular Increment, row3 date +12 months, next after row3Pay
+  const row4Date = addMonths(date4, 12);
+  const row3Index = newArr.indexOf(row3Pay);
+  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
+    ? newArr[row3Index + 1] 
+    : row3Pay;
+  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
+  
+  // Additional Row: Pay Changes Details
+  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+12 months).`;
+  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
+  
+  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
+}
+
+function fillTable3(date2, newArr, oldPay, oldArr){
+  if(!date2) return;
+  const body = document.getElementById("table3Body");
+  body.innerHTML = "";
+  
+  // Row 1: Promotion on immediate with +1 increment
+  const oldIndexRow1 = oldArr.indexOf(oldPay);
+  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
+    ? oldArr[oldIndexRow1 + 1] 
+    : oldArr[oldArr.length - 1] || oldPay;
+  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td></tr>`;
+  
+  // Row 2: as per NO Option and new level fix, Date 2, find >= row1Pay in newArr
+  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
+  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
+  
+  // Row 3: Regular Increment, Date 4, next after row2Pay
+  const date4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
+  const row2Index = newArr.indexOf(row2Pay);
+  const row3Pay = (row2Index !== -1 && row2Index + 1 < newArr.length) 
+    ? newArr[row2Index + 1] 
+    : row2Pay;
+  const row3 = `<tr><td>Regular Increment</td><td>${date4.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
+  
+  // Row 4: Regular Increment, row3 date +12 months, next after row3Pay
+  const row4Date = addMonths(date4, 12);
+  const row3Index = newArr.indexOf(row3Pay);
+  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
+    ? newArr[row3Index + 1] 
+    : row3Pay;
+  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
+  
+  // Additional Row: Pay Changes Details
+  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+12 months).`;
+  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
+  
+  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
+}
+
+function fillTable4(date2, newArr, oldPay, oldArr){
+  if(!date2) return;
+  const body = document.getElementById("table4Body");
+  body.innerHTML = "";
+  
+  // Row 1: Promotion on immediate with +1 increment
+  const oldIndexRow1 = oldArr.indexOf(oldPay);
+  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
+    ? oldArr[oldIndexRow1 + 1] 
+    : oldArr[oldArr.length - 1] || oldPay;
+  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td></tr>`;
+  
+  // Row 2: as per NO Option and new level fix, Date 3, find >= row1Pay in newArr
+  const date3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
+  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
+  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
+  
+  // Row 3: Regular Increment, Date 3, find >= row2Pay in newArr
+  const row3Pay = newArr.find(v => v >= row2Pay) || newArr[newArr.length - 1];
+  const row3 = `<tr><td>Regular Increment</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
+  
+  // Row 4: Regular Increment, row3 date +6 months, next after row3Pay
+  const row4Date = addMonths(date3, 6);
+  const row3Index = newArr.indexOf(row3Pay);
+  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
+    ? newArr[row3Index + 1] 
+    : row3Pay;
+  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
+  
+  // Additional Row: Pay Changes Details
+  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+6 months).`;
+  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
+  
+  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
+}
+
+function fillComparisonTable(){
+  const table1Body = document.getElementById("table1Body");
+  const table2Body = document.getElementById("table2Body");
+  const table3Body = document.getElementById("table3Body");
+  const table4Body = document.getElementById("table4Body");
+  const comparisonBody = document.getElementById("comparisonBody");
+  const comparisonText = document.getElementById("comparisonText");
+
+  if (!table1Body.children.length || !table2Body.children.length || !table3Body.children.length || !table4Body.children.length) return;
+
+  // Get final pays (last row before pay change row)
+  const table1Pay = Number(table1Body.children[4].children[2].textContent); // Row 5 of Table-1
+  const table2Pay = Number(table2Body.children[3].children[2].textContent); // Row 4 of Table-2
+  const table3Pay = Number(table3Body.children[3].children[2].textContent); // Row 4 of Table-3
+  const table4Pay = Number(table4Body.children[3].children[2].textContent); // Row 4 of Table-4
+
+  const pays = [
+    { name: "Table-1", pay: table1Pay },
+    { name: "Table-2", pay: table2Pay },
+    { name: "Table-3", pay: table3Pay },
+    { name: "Table-4", pay: table4Pay }
+  ];
+  
+  const maxPay = Math.max(table1Pay, table2Pay, table3Pay, table4Pay);
+  const mostBeneficial = pays.find(p => p.pay === maxPay).name;
+
+  let html = "";
+  pays.forEach(p => {
+    const isBest = p.pay === maxPay;
+    const className = isBest ? "highlight" : "";
+    const indicator = isBest ? "✅ Most Beneficial" : "Less Beneficial";
+    html += `<tr class="${className}"><td>${p.name}</td><td>₹${p.pay}</td><td>${indicator}</td></tr>`;
+  });
+
+  comparisonBody.innerHTML = html;
+  comparisonText.textContent = `${mostBeneficial} provides the highest pay of ₹${maxPay}, making it the most beneficial option.`;
+}
+</script>
+</body>
+</html>
