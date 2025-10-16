@@ -72,6 +72,9 @@
   .comparison-table th, .comparison-table td { padding: 8px; }
   .comparison-table .highlight { background: #90ee90; font-weight: bold; }
   .comparison-text { text-align: center; margin-top: 10px; color: #006400; font-weight: bold; }
+  .action-buttons { text-align: center; margin-top: 10px; }
+  .action-buttons button { padding: 8px 16px; margin: 5px; background: #4682b4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  .action-buttons button:hover { background: #003087; }
 </style>
 </head>
 <body>
@@ -126,42 +129,32 @@
 
 <div class="additional-tables">
   <div class="additional-table">
-    <h3 id="table1Header">Table-1</h3>
+    <h3 id="table1Header">KKKKKKK</h3>
     <table>
       <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
       <tbody id="table1Body"></tbody>
     </table>
   </div>
   <div class="additional-table">
-    <h3 id="table2Header">Table-2</h3>
+    <h3 id="table2Header">JJJJJJJ</h3>
     <table>
       <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
       <tbody id="table2Body"></tbody>
     </table>
   </div>
-  <div class="additional-table">
-    <h3 id="table3Header">Table-3</h3>
-    <table>
-      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
-      <tbody id="table3Body"></tbody>
-    </table>
-  </div>
-  <div class="additional-table">
-    <h3 id="table4Header">Table-4</h3>
-    <table>
-      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
-      <tbody id="table4Body"></tbody>
-    </table>
-  </div>
 </div>
 
 <div class="comparison-section">
-  <h3>Pay Fixation Comparison</h3>
+  <h3>Result Table</h3>
   <table class="comparison-table">
-    <thead><tr><th>Option</th><th>Final Revised Basic Pay</th><th>Benefit Indicator</th></tr></thead>
+    <thead><tr><th>Option</th><th>Final Revised Basic Pay</th><th>Level</th></tr></thead>
     <tbody id="comparisonBody"></tbody>
   </table>
   <div class="comparison-text" id="comparisonText"></div>
+  <div class="action-buttons">
+    <button onclick="shareResults()">Share Results</button>
+    <button onclick="printResults()">Print</button>
+  </div>
 </div>
 
 <script>
@@ -244,22 +237,11 @@ function calculate(){
     const higher = newArr.find(v=>v>oldPay) || "";
     basicNew.value = higher;
     // Update table headers
-    const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    const d3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
-    const d4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
-    const monthName = monthNames[d1.getMonth()];
-    const isSameMonthYear = (d3.getMonth() === d4.getMonth() && d3.getFullYear() === d4.getFullYear());
-    const suffix = isSameMonthYear ? "+6" : "-6";
-    const tableName = `${monthName}${suffix}/NO`;
-    document.getElementById("table1Header").textContent = tableName;
-    document.getElementById("table2Header").textContent = tableName;
-    document.getElementById("table3Header").textContent = tableName;
-    document.getElementById("table4Header").textContent = tableName;
+    document.getElementById("table1Header").textContent = "KKKKKKK";
+    document.getElementById("table2Header").textContent = "JJJJJJJ";
     fillTable1(d2, higher, newArr, oldPay, oldArr);
     fillTable2(d2, newArr, oldPay, oldArr);
-    fillTable3(d2, newArr, oldPay, oldArr);
-    fillTable4(d2, newArr, oldPay, oldArr);
-    fillComparisonTable();
+    fillResultTable(oldLvl, newLvl);
   }
 }
 
@@ -349,117 +331,85 @@ function fillTable2(date2, newArr, oldPay, oldArr){
   body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
 }
 
-function fillTable3(date2, newArr, oldPay, oldArr){
-  if(!date2) return;
-  const body = document.getElementById("table3Body");
-  body.innerHTML = "";
-  
-  // Row 1: Promotion on immediate with +1 increment
-  const oldIndexRow1 = oldArr.indexOf(oldPay);
-  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
-    ? oldArr[oldIndexRow1 + 1] 
-    : oldArr[oldArr.length - 1] || oldPay;
-  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td></tr>`;
-  
-  // Row 2: as per NO Option and new level fix, Date 2, find >= row1Pay in newArr
-  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
-  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
-  
-  // Row 3: Regular Increment, Date 4, next after row2Pay
-  const date4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
-  const row2Index = newArr.indexOf(row2Pay);
-  const row3Pay = (row2Index !== -1 && row2Index + 1 < newArr.length) 
-    ? newArr[row2Index + 1] 
-    : row2Pay;
-  const row3 = `<tr><td>Regular Increment</td><td>${date4.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
-  
-  // Row 4: Regular Increment, row3 date +12 months, next after row3Pay
-  const row4Date = addMonths(date4, 12);
-  const row3Index = newArr.indexOf(row3Pay);
-  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
-    ? newArr[row3Index + 1] 
-    : row3Pay;
-  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
-  
-  // Additional Row: Pay Changes Details
-  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+12 months).`;
-  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
-  
-  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
+function getLevelForPay(pay, oldLvl, newLvl) {
+  const oldArr = payMatrix[oldLvl];
+  const newArr = payMatrix[newLvl];
+  const inOld = oldArr.includes(pay);
+  const inNew = newArr.includes(pay);
+  if (inOld && inNew) return `Level ${oldLvl}/${newLvl}`;
+  if (inOld) return `Old Level ${oldLvl}`;
+  if (inNew) return `Revised Level ${newLvl}`;
+  return "Custom";
 }
 
-function fillTable4(date2, newArr, oldPay, oldArr){
-  if(!date2) return;
-  const body = document.getElementById("table4Body");
-  body.innerHTML = "";
-  
-  // Row 1: Promotion on immediate with +1 increment
-  const oldIndexRow1 = oldArr.indexOf(oldPay);
-  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
-    ? oldArr[oldIndexRow1 + 1] 
-    : oldArr[oldArr.length - 1] || oldPay;
-  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td></tr>`;
-  
-  // Row 2: as per NO Option and new level fix, Date 3, find >= row1Pay in newArr
-  const date3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
-  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
-  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
-  
-  // Row 3: Regular Increment, Date 3, find >= row2Pay in newArr
-  const row3Pay = newArr.find(v => v >= row2Pay) || newArr[newArr.length - 1];
-  const row3 = `<tr><td>Regular Increment</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
-  
-  // Row 4: Regular Increment, row3 date +6 months, next after row3Pay
-  const row4Date = addMonths(date3, 6);
-  const row3Index = newArr.indexOf(row3Pay);
-  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
-    ? newArr[row3Index + 1] 
-    : row3Pay;
-  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
-  
-  // Additional Row: Pay Changes Details
-  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+6 months).`;
-  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
-  
-  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
-}
-
-function fillComparisonTable(){
+function fillResultTable(oldLvl, newLvl){
   const table1Body = document.getElementById("table1Body");
   const table2Body = document.getElementById("table2Body");
-  const table3Body = document.getElementById("table3Body");
-  const table4Body = document.getElementById("table4Body");
   const comparisonBody = document.getElementById("comparisonBody");
   const comparisonText = document.getElementById("comparisonText");
 
-  if (!table1Body.children.length || !table2Body.children.length || !table3Body.children.length || !table4Body.children.length) return;
+  if (!table1Body.children.length || !table2Body.children.length) return;
 
   // Get final pays (last row before pay change row)
   const table1Pay = Number(table1Body.children[4].children[2].textContent); // Row 5 of Table-1
   const table2Pay = Number(table2Body.children[3].children[2].textContent); // Row 4 of Table-2
-  const table3Pay = Number(table3Body.children[3].children[2].textContent); // Row 4 of Table-3
-  const table4Pay = Number(table4Body.children[3].children[2].textContent); // Row 4 of Table-4
 
   const pays = [
-    { name: "Table-1", pay: table1Pay },
-    { name: "Table-2", pay: table2Pay },
-    { name: "Table-3", pay: table3Pay },
-    { name: "Table-4", pay: table4Pay }
+    { name: "KKKKKKK", pay: table1Pay },
+    { name: "JJJJJJJ", pay: table2Pay }
   ];
   
-  const maxPay = Math.max(table1Pay, table2Pay, table3Pay, table4Pay);
+  const maxPay = Math.max(table1Pay, table2Pay);
   const mostBeneficial = pays.find(p => p.pay === maxPay).name;
 
   let html = "";
   pays.forEach(p => {
     const isBest = p.pay === maxPay;
     const className = isBest ? "highlight" : "";
+    const level = getLevelForPay(p.pay, oldLvl, newLvl);
     const indicator = isBest ? "✅ Most Beneficial" : "Less Beneficial";
-    html += `<tr class="${className}"><td>${p.name}</td><td>₹${p.pay}</td><td>${indicator}</td></tr>`;
+    html += `<tr class="${className}"><td>${p.name}</td><td>₹${p.pay}</td><td>${level}</td></tr>`;
   });
 
   comparisonBody.innerHTML = html;
   comparisonText.textContent = `${mostBeneficial} provides the highest pay of ₹${maxPay}, making it the most beneficial option.`;
+}
+
+function shareResults() {
+  const comparisonBody = document.getElementById("comparisonBody");
+  const comparisonText = document.getElementById("comparisonText").textContent;
+  let shareText = "7th CPC Pay Fixation Calculator - Western Railway\n\nResult Table\n";
+  for (let row of comparisonBody.children) {
+    const cells = row.children;
+    shareText += `${cells[0].textContent}: ₹${cells[1].textContent} (${cells[2].textContent})\n`;
+  }
+  shareText += `\n${comparisonText}`;
+
+  if (navigator.share) {
+    navigator.share({
+      title: "7th CPC Pay Fixation Results",
+      text: shareText
+    }).catch(err => {
+      console.error("Share failed:", err);
+      copyToClipboard(shareText);
+    });
+  } else {
+    copyToClipboard(shareText);
+  }
+}
+
+function copyToClipboard(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+  alert("Results copied to clipboard!");
+}
+
+function printResults() {
+  window.print();
 }
 </script>
 </body>
