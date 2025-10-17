@@ -42,45 +42,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>7th CPC Pay Fixation Calculator</title>
+<title>7th CPC Pay Fixation Dashboard</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; background: linear-gradient(to bottom, #e6f3ff, #b3d9ff); color: #222; }
-  h2 { text-align: center; margin-bottom: 10px; color: #003087; }
-  .header { display: flex; align-items: center; justify-content: center; gap: 20px; }
-  .header img { max-width: 80px; }
-  .top-section { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
-  .block { background: #e6e6fa; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); flex: 1; min-width: 260px; }
-  label { display: block; margin-top: 6px; font-weight: 600; color: #003087; }
-  select, input { width: 100%; padding: 5px; margin-top: 3px; border: 1px solid #4682b4; border-radius: 4px; }
+  body { font-family: Arial, sans-serif; margin: 10px; background: linear-gradient(to bottom, #e6f3ff, #b3d9ff); color: #222; font-size: 18px; }
+  h2 { text-align: center; margin-bottom: 5px; color: #003087; font-size: 28px; }
+  .header { display: flex; align-items: center; justify-content: center; gap: 30px; }
+  .header img { max-width: 90px; }
+  .top-section { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .block { background: #e6e6fa; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px; }
+  label { display: block; margin-top: 4px; font-weight: 600; color: #003087; font-size: 22px; }
+  select, input { width: 100%; padding: 4px; margin-top: 2px; border: 1px solid #4682b4; border-radius: 4px; font-size: 12px; }
   .hidden { display: none; }
-  .matrix-container { display: flex; justify-content: space-around; gap: 20px; margin-top: 15px; flex-wrap: wrap; display: none; }
-  .matrix-toggle { margin: 10px 0; text-align: center; }
-  .matrix-toggle button { padding: 8px 16px; background: #4682b4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  .matrix-container { display: flex; justify-content: space-around; gap: 10px; margin-top: 10px; flex-wrap: wrap; display: none; }
+  .matrix-toggle { margin: 5px 0; text-align: center; }
+  .matrix-toggle button { padding: 6px 12px; background: #4682b4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .matrix-toggle button:hover { background: #003087; }
-  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 13px; }
-  th, td { border: 1px solid #ccc; text-align: center; padding: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 5px; font-size: 18px; }
+  th, td { border: 1px solid #ccc; text-align: center; padding: 3px; }
   th { background: #b0c4de; color: #00008b; }
-  .pay-details { background: #f0f8ff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-  .additional-tables { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 40px; }
-  .additional-table { background: #e6e6fa; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-  .additional-table h3 { color: #ff4500; }
-  .additional-table table { font-size: 16px; }
-  .additional-table th, .additional-table td { padding: 8px; background: #f0fff0; }
+  .pay-details { background: #f0f8ff; margin-top: 10px; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .additional-tables { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+  .additional-table { background: #e6e6fa; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .additional-table h3 { color: #ff4500; font-size: 21px; margin-bottom: 5px; }
+  .additional-table table { font-size: 21px; }
+  .additional-table th, .additional-table td { padding: 4px; background: #f0fff0; }
   .pay-change-row td { background: #b0e0e6; font-style: italic; }
-  .comparison-section { margin-top: 40px; padding: 15px; background: #f5f5f5; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-  .comparison-section h3 { color: #228b22; text-align: center; }
-  .comparison-table th, .comparison-table td { padding: 8px; }
+  .comparison-section { margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .comparison-section h3 { color: #228b22; text-align: center; font-size: 19px; }
+  .comparison-table th, .comparison-table td { padding: 4px; }
   .comparison-table .highlight { background: #90ee90; font-weight: bold; }
-  .comparison-text { text-align: center; margin-top: 10px; color: #006400; font-weight: bold; }
-  .action-buttons { text-align: center; margin-top: 10px; }
-  .action-buttons button { padding: 8px 16px; margin: 5px; background: #4682b4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  .comparison-text { text-align: center; margin-top: 5px; color: #006400; font-weight: bold; font-size: 16px; }
+  .action-buttons { text-align: center; margin-top: 5px; }
+  .action-buttons button { padding: 6px 12px; margin: 3px; background: #4682b4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .action-buttons button:hover { background: #003087; }
+  .table-buttons { text-align: right; margin-bottom: 3px; }
+  .table-buttons button { padding: 4px 8px; margin-left: 3px; background: #4682b4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; }
+  .table-buttons button:hover { background: #003087; }
+  footer { text-align: center; margin-top: 20px; color: #666; font-size: 16px; }
+  .error { color: red; font-size: 10px; margin-top: 2px; }
+  @media print {
+    body { font-size: 10pt; margin: 0; }
+    .header img { max-width: 50px; }
+    .top-section, .matrix-toggle, .pay-details, .action-buttons, .table-buttons { display: none; }
+    .additional-tables { grid-template-columns: 1fr; }
+    .comparison-section { page-break-before: always; }
+  }
 </style>
 </head>
 <body>
 <div class="header">
-  <img src="https://www.wr.indianrailways.gov.in/images/logo.png" alt="Western Railway Logo">
-  <h2>7th CPC Pay Fixation Calculator - Western Railway</h2>
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStZUGx5ETva3RM06-bJ5D01N0CjqVp2QFzQw&s" alt="Western Railway Logo">
+  <h2>7th CPC Pay Fixation Dashboard - Western Railway</h2>
 </div>
 
 <div class="top-section">
@@ -94,6 +106,7 @@
   <div class="block">
     <label>Last Increment Date (Date 1)</label>
     <input type="date" id="date1">
+    <div id="date1Error" class="error"></div>
     <label>Promotion Date (Date 2)</label>
     <input type="date" id="date2">
     <label class="hidden">Next Increment Date (Date 3)</label>
@@ -110,18 +123,19 @@
 <div class="pay-details">
   <h3>💰 Pay Details</h3>
   <label>Basic Pay (Old)</label>
-  <input type="number" id="basicOld">
+  <select id="basicOld"></select>
+  <div id="basicOldError" class="error"></div>
 
   <label class="hidden">Revised Basic Pay (Auto)</label>
   <input type="text" id="basicNew" class="hidden" readonly>
 
   <div class="matrix-container" id="matrixContainer">
     <div>
-      <h4>Old Level Matrix</h4>
+      <h4 id="oldMatrixHeader">Old Level Matrix</h4>
       <table id="oldMatrixTable"></table>
     </div>
     <div>
-      <h4>Revised Level Matrix</h4>
+      <h4 id="newMatrixHeader">Revised Level Matrix</h4>
       <table id="newMatrixTable"></table>
     </div>
   </div>
@@ -129,23 +143,31 @@
 
 <div class="additional-tables">
   <div class="additional-table">
-    <h3 id="table1Header">KKKKKKK</h3>
+    <div class="table-buttons">
+      <button onclick="copyTableToClipboard('table1Body')">Copy to Excel</button>
+      <button onclick="exportTableToCSV('table1Body', 'Option_for_DNI.csv')">Export CSV</button>
+    </div>
+    <h3 id="table1Header">Option for DNI</h3>
     <table>
-      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
+      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th><th>Level</th></tr></thead>
       <tbody id="table1Body"></tbody>
     </table>
   </div>
   <div class="additional-table">
-    <h3 id="table2Header">JJJJJJJ</h3>
+    <div class="table-buttons">
+      <button onclick="copyTableToClipboard('table2Body')">Copy to Excel</button>
+      <button onclick="exportTableToCSV('table2Body', 'On_promotion_Date.csv')">Export CSV</button>
+    </div>
+    <h3 id="table2Header">On promotion Date</h3>
     <table>
-      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th></tr></thead>
+      <thead><tr><th>Option</th><th>Promotion Date</th><th>Revised Basic Pay</th><th>Level</th></tr></thead>
       <tbody id="table2Body"></tbody>
     </table>
   </div>
 </div>
 
 <div class="comparison-section">
-  <h3>Result Table</h3>
+  <h3>Pay Fixation Comparison</h3>
   <table class="comparison-table">
     <thead><tr><th>Option</th><th>Final Revised Basic Pay</th><th>Level</th></tr></thead>
     <tbody id="comparisonBody"></tbody>
@@ -156,6 +178,10 @@
     <button onclick="printResults()">Print</button>
   </div>
 </div>
+
+<footer>
+  Developed by WR for - Personnel Department-  WR
+</footer>
 
 <script>
 /* ---------- PAY MATRIX DATA (LEVEL 1 TO 15) ---------- */
@@ -192,27 +218,89 @@ function toggleMatrix() {
 }
 
 /* ---------- DISPLAY MATRIX ---------- */
-function showMatrix(level, tableId){
+function showMatrix(level, tableId, headerId) {
   const arr = payMatrix[level];
   let html = "<tr><th>Stage</th><th>Pay</th></tr>";
   arr.forEach((p,i)=> html += `<tr><td>${i+1}</td><td>${p}</td></tr>`);
   document.getElementById(tableId).innerHTML = html;
+  document.getElementById(headerId).textContent = `${headerId === 'oldMatrixHeader' ? 'Old' : 'Revised'} Level Matrix (Level ${level})`;
 }
 
 /* ---------- EVENT HANDLERS ---------- */
 oldLevel.addEventListener("change", ()=>{
-  showMatrix(oldLevel.value,"oldMatrixTable");
+  showMatrix(oldLevel.value,"oldMatrixTable", "oldMatrixHeader");
+  updateNewLevelDropdown();
+  updateBasicOldDropdown();
   calculate();
 });
 newLevel.addEventListener("change", ()=>{
-  showMatrix(newLevel.value,"newMatrixTable");
+  showMatrix(newLevel.value,"newMatrixTable", "newMatrixHeader");
   calculate();
 });
-date1.addEventListener("change", calculate);
+date1.addEventListener("change", ()=>{
+  validateDate1();
+  updateDate2Min();
+  calculate();
+});
 date2.addEventListener("change", calculate);
-basicOld.addEventListener("input", calculate);
+basicOld.addEventListener("change", calculate);
+
+function updateNewLevelDropdown() {
+  const oldLvl = parseInt(oldLevel.value);
+  newLevel.innerHTML = "";
+  for (let i = oldLvl + 1; i <= 15; i++) {
+    newLevel.innerHTML += `<option value="${i}">Level ${i}</option>`;
+  }
+}
+
+function updateBasicOldDropdown() {
+  const oldLvl = oldLevel.value;
+  const basicOldSelect = document.getElementById("basicOld");
+  basicOldSelect.innerHTML = "";
+  if (oldLvl) {
+    const arr = payMatrix[oldLvl];
+    arr.forEach(p => {
+      basicOldSelect.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+  }
+  document.getElementById("basicOldError").textContent = "";
+}
+
+function validateDate1() {
+  const date1Value = document.getElementById("date1").value;
+  const date1Error = document.getElementById("date1Error");
+  date1Error.textContent = "";
+  if (date1Value) {
+    const date = new Date(date1Value);
+    const day = date.getDate();
+    const month = date.getMonth();
+    if (!((day === 1 && month === 0) || (day === 1 && month === 6))) {
+      date1Error.textContent = "Please select 1st January or 1st July only.";
+      return false;
+    }
+  }
+  return true;
+}
+
+function updateDate2Min() {
+  const date1Value = document.getElementById("date1").value;
+  if (date1Value) {
+    document.getElementById("date2").min = date1Value;
+  }
+}
+
+function validateBasicOld() {
+  const oldLvl = oldLevel.value;
+  const basicOldValue = Number(basicOld.value);
+  if (oldLvl && !payMatrix[oldLvl].includes(basicOldValue)) {
+    document.getElementById("basicOldError").textContent = "Invalid Basic Pay for selected Old Level.";
+    return false;
+  }
+  return true;
+}
 
 function calculate(){
+  if (!validateDate1() || !validateBasicOld()) return;
   const d1 = new Date(date1.value);
   const d2 = new Date(date2.value);
   if(date1.value){
@@ -236,99 +324,14 @@ function calculate(){
     // find next higher in new level for Table-1
     const higher = newArr.find(v=>v>oldPay) || "";
     basicNew.value = higher;
-    // Update table headers
-    document.getElementById("table1Header").textContent = "KKKKKKK";
-    document.getElementById("table2Header").textContent = "JJJJJJJ";
-    fillTable1(d2, higher, newArr, oldPay, oldArr);
-    fillTable2(d2, newArr, oldPay, oldArr);
+    fillTable1(d2, higher, newArr, oldPay, oldArr, oldLvl, newLvl);
+    fillTable2(d2, newArr, oldPay, oldArr, oldLvl, newLvl);
     fillResultTable(oldLvl, newLvl);
   }
 }
 
 function addMonths(date, months){
   const d = new Date(date); d.setMonth(d.getMonth()+months); return d;
-}
-
-function fillTable1(date2, revPay, newArr, oldPay, oldArr){
-  if(!date2 || !revPay) return;
-  const body = document.getElementById("table1Body");
-  body.innerHTML = "";
-  
-  // Row 1: Promotion on immediate
-  const row1 = `<tr><td>Promotion on immediate</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${revPay}</td></tr>`;
-  
-  // Row 2: 2 increment (1 promotion+1 regular), Date 3, Old Pay +2 in oldArr
-  const date3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
-  const oldIndex = oldArr.indexOf(oldPay);
-  const row2Pay = (oldIndex !== -1 && oldIndex + 2 < oldArr.length) 
-    ? oldArr[oldIndex + 2] 
-    : oldArr[oldArr.length - 1] || oldPay;
-  const row2 = `<tr><td>2 increment (1 promotion+1 regular)</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
-  
-  // Row 3: next level fix, same date as row2, pay: find >= row2Pay in newArr
-  const row3Pay = newArr.find(v => v >= row2Pay) || newArr[newArr.length - 1];
-  const row3 = `<tr><td>next level fix</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
-  
-  // Row 4: as per rules, row3 date +6 months, next after row3Pay
-  const row4Date = addMonths(date3, 6);
-  const row3Index = newArr.indexOf(row3Pay);
-  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
-    ? newArr[row3Index + 1] 
-    : row3Pay;
-  const row4 = `<tr><td>as per rules</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
-  
-  // Row 5: next as per year, row4 date +12 months, next after row4Pay
-  const row5Date = addMonths(row4Date, 12);
-  const row4Index = newArr.indexOf(row4Pay);
-  const row5Pay = (row4Index !== -1 && row4Index + 1 < newArr.length) 
-    ? newArr[row4Index + 1] 
-    : row4Pay;
-  const row5 = `<tr><td>next as per year</td><td>${row5Date.toLocaleDateString('en-GB')}</td><td>${row5Pay}</td></tr>`;
-  
-  // Additional Row: Pay Changes Details
-  const payChangeDetails = `Pay changes from old ${oldPay} to ${revPay} (immediate), then to ${row2Pay} (2 increments in old level), then fixed to ${row3Pay} (next level fix), then to ${row4Pay} (+6 months rule), then to ${row5Pay} (+12 months).`;
-  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
-  
-  body.innerHTML = row1 + row2 + row3 + row4 + row5 + payChangeRow;
-}
-
-function fillTable2(date2, newArr, oldPay, oldArr){
-  if(!date2) return;
-  const body = document.getElementById("table2Body");
-  body.innerHTML = "";
-  
-  // Row 1: Promotion on immediate with +1 increment
-  const oldIndexRow1 = oldArr.indexOf(oldPay);
-  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
-    ? oldArr[oldIndexRow1 + 1] 
-    : oldArr[oldArr.length - 1] || oldPay;
-  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td></tr>`;
-  
-  // Row 2: as per NO Option and new level fix, Date 2, find >= row1Pay in newArr
-  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
-  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td></tr>`;
-  
-  // Row 3: Regular Increment, Date 4, next after row2Pay
-  const date4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
-  const row2Index = newArr.indexOf(row2Pay);
-  const row3Pay = (row2Index !== -1 && row2Index + 1 < newArr.length) 
-    ? newArr[row2Index + 1] 
-    : row2Pay;
-  const row3 = `<tr><td>Regular Increment</td><td>${date4.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td></tr>`;
-  
-  // Row 4: Regular Increment, row3 date +12 months, next after row3Pay
-  const row4Date = addMonths(date4, 12);
-  const row3Index = newArr.indexOf(row3Pay);
-  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
-    ? newArr[row3Index + 1] 
-    : row3Pay;
-  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td></tr>`;
-  
-  // Additional Row: Pay Changes Details
-  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+12 months).`;
-  const payChangeRow = `<tr class="pay-change-row"><td colspan="3">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
-  
-  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
 }
 
 function getLevelForPay(pay, oldLvl, newLvl) {
@@ -342,6 +345,97 @@ function getLevelForPay(pay, oldLvl, newLvl) {
   return "Custom";
 }
 
+function fillTable1(date2, revPay, newArr, oldPay, oldArr, oldLvl, newLvl){
+  if(!date2 || !revPay) return;
+  const body = document.getElementById("table1Body");
+  body.innerHTML = "";
+  
+  // Row 1: Promotion on immediate
+  const row1Level = getLevelForPay(revPay, oldLvl, newLvl);
+  const row1 = `<tr><td>Promotion on immediate</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${revPay}</td><td>${row1Level}</td></tr>`;
+  
+  // Row 2: 2 increment (1 promotion+1 regular), Date 3, Old Pay +2 in oldArr
+  const date3 = new Date(document.getElementById("date3").value.split("/").reverse().join("-"));
+  const oldIndex = oldArr.indexOf(oldPay);
+  const row2Pay = (oldIndex !== -1 && oldIndex + 2 < oldArr.length) 
+    ? oldArr[oldIndex + 2] 
+    : oldArr[oldArr.length - 1] || oldPay;
+  const row2Level = getLevelForPay(row2Pay, oldLvl, newLvl);
+  const row2 = `<tr><td>2 increment (1 promotion+1 regular)</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td><td>${row2Level}</td></tr>`;
+  
+  // Row 3: next level fix, same date as row2, pay: find >= row2Pay in newArr
+  const row3Pay = newArr.find(v => v >= row2Pay) || newArr[newArr.length - 1];
+  const row3Level = getLevelForPay(row3Pay, oldLvl, newLvl);
+  const row3 = `<tr><td>next level fix</td><td>${date3.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td><td>${row3Level}</td></tr>`;
+  
+  // Row 4: as per rules, row3 date +6 months, next after row3Pay
+  const row4Date = addMonths(date3, 6);
+  const row3Index = newArr.indexOf(row3Pay);
+  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
+    ? newArr[row3Index + 1] 
+    : row3Pay;
+  const row4Level = getLevelForPay(row4Pay, oldLvl, newLvl);
+  const row4 = `<tr><td>as per rules</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td><td>${row4Level}</td></tr>`;
+  
+  // Row 5: next as per year, row4 date +12 months, next after row4Pay
+  const row5Date = addMonths(row4Date, 12);
+  const row4Index = newArr.indexOf(row4Pay);
+  const row5Pay = (row4Index !== -1 && row4Index + 1 < newArr.length) 
+    ? newArr[row4Index + 1] 
+    : row4Pay;
+  const row5Level = getLevelForPay(row5Pay, oldLvl, newLvl);
+  const row5 = `<tr><td>next as per year</td><td>${row5Date.toLocaleDateString('en-GB')}</td><td>${row5Pay}</td><td>${row5Level}</td></tr>`;
+  
+  // Additional Row: Pay Changes Details
+  const payChangeDetails = `Pay changes from old ${oldPay} to ${revPay} (immediate), then to ${row2Pay} (2 increments in old level), then fixed to ${row3Pay} (next level fix), then to ${row4Pay} (+6 months rule), then to ${row5Pay} (+12 months).`;
+  const payChangeRow = `<tr class="pay-change-row"><td colspan="4">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
+  
+  body.innerHTML = row1 + row2 + row3 + row4 + row5 + payChangeRow;
+}
+
+function fillTable2(date2, newArr, oldPay, oldArr, oldLvl, newLvl){
+  if(!date2) return;
+  const body = document.getElementById("table2Body");
+  body.innerHTML = "";
+  
+  // Row 1: Promotion on immediate with +1 increment
+  const oldIndexRow1 = oldArr.indexOf(oldPay);
+  const row1Pay = (oldIndexRow1 !== -1 && oldIndexRow1 + 1 < oldArr.length) 
+    ? oldArr[oldIndexRow1 + 1] 
+    : oldArr[oldArr.length - 1] || oldPay;
+  const row1Level = getLevelForPay(row1Pay, oldLvl, newLvl);
+  const row1 = `<tr><td>Promotion on immediate with +1 increment</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row1Pay}</td><td>${row1Level}</td></tr>`;
+  
+  // Row 2: as per NO Option and new level fix, Date 2, find >= row1Pay in newArr
+  const row2Pay = newArr.find(v => v >= row1Pay) || newArr[newArr.length - 1];
+  const row2Level = getLevelForPay(row2Pay, oldLvl, newLvl);
+  const row2 = `<tr><td>as per NO Option and new level fix</td><td>${date2.toLocaleDateString('en-GB')}</td><td>${row2Pay}</td><td>${row2Level}</td></tr>`;
+  
+  // Row 3: Regular Increment, Date 4, next after row2Pay
+  const date4 = new Date(document.getElementById("date4").value.split("/").reverse().join("-"));
+  const row2Index = newArr.indexOf(row2Pay);
+  const row3Pay = (row2Index !== -1 && row2Index + 1 < newArr.length) 
+    ? newArr[row2Index + 1] 
+    : row2Pay;
+  const row3Level = getLevelForPay(row3Pay, oldLvl, newLvl);
+  const row3 = `<tr><td>Regular Increment</td><td>${date4.toLocaleDateString('en-GB')}</td><td>${row3Pay}</td><td>${row3Level}</td></tr>`;
+  
+  // Row 4: Regular Increment, row3 date +12 months, next after row3Pay
+  const row4Date = addMonths(date4, 12);
+  const row3Index = newArr.indexOf(row3Pay);
+  const row4Pay = (row3Index !== -1 && row3Index + 1 < newArr.length) 
+    ? newArr[row3Index + 1] 
+    : row3Pay;
+  const row4Level = getLevelForPay(row4Pay, oldLvl, newLvl);
+  const row4 = `<tr><td>Regular Increment</td><td>${row4Date.toLocaleDateString('en-GB')}</td><td>${row4Pay}</td><td>${row4Level}</td></tr>`;
+  
+  // Additional Row: Pay Changes Details
+  const payChangeDetails = `Pay changes from old ${oldPay} to ${row1Pay} (immediate +1 increment), then to ${row2Pay} (new level fix), then to ${row3Pay} (regular increment), then to ${row4Pay} (+12 months).`;
+  const payChangeRow = `<tr class="pay-change-row"><td colspan="4">Basic Pay Changes: ${payChangeDetails}</td></tr>`;
+  
+  body.innerHTML = row1 + row2 + row3 + row4 + payChangeRow;
+}
+
 function fillResultTable(oldLvl, newLvl){
   const table1Body = document.getElementById("table1Body");
   const table2Body = document.getElementById("table2Body");
@@ -352,11 +446,13 @@ function fillResultTable(oldLvl, newLvl){
 
   // Get final pays (last row before pay change row)
   const table1Pay = Number(table1Body.children[4].children[2].textContent); // Row 5 of Table-1
+  const table1Level = getLevelForPay(table1Pay, oldLvl, newLvl);
   const table2Pay = Number(table2Body.children[3].children[2].textContent); // Row 4 of Table-2
+  const table2Level = getLevelForPay(table2Pay, oldLvl, newLvl);
 
   const pays = [
-    { name: "KKKKKKK", pay: table1Pay },
-    { name: "JJJJJJJ", pay: table2Pay }
+    { name: "Option for DNI", pay: table1Pay, level: table1Level },
+    { name: "On promotion Date", pay: table2Pay, level: table2Level }
   ];
   
   const maxPay = Math.max(table1Pay, table2Pay);
@@ -366,19 +462,61 @@ function fillResultTable(oldLvl, newLvl){
   pays.forEach(p => {
     const isBest = p.pay === maxPay;
     const className = isBest ? "highlight" : "";
-    const level = getLevelForPay(p.pay, oldLvl, newLvl);
-    const indicator = isBest ? "✅ Most Beneficial" : "Less Beneficial";
-    html += `<tr class="${className}"><td>${p.name}</td><td>₹${p.pay}</td><td>${level}</td></tr>`;
+    html += `<tr class="${className}"><td>${p.name}</td><td>₹${p.pay}</td><td>${p.level}</td></tr>`;
   });
 
   comparisonBody.innerHTML = html;
   comparisonText.textContent = `${mostBeneficial} provides the highest pay of ₹${maxPay}, making it the most beneficial option.`;
 }
 
+function copyTableToClipboard(tableId) {
+  const table = document.getElementById(tableId);
+  let csv = [];
+  for (let row of table.rows) {
+    let rowData = [];
+    for (let cell of row.cells) {
+      rowData.push(`"${cell.textContent.replace(/"/g, '""')}"`);
+    }
+    csv.push(rowData.join("\t"));
+  }
+  const csvText = csv.join("\n");
+  copyToClipboard(csvText);
+  alert("Table copied to clipboard as tab-separated text!");
+}
+
+function exportTableToCSV(tableId, filename) {
+  const table = document.getElementById(tableId);
+  let csv = [];
+  for (let row of table.rows) {
+    let rowData = [];
+    for (let cell of row.cells) {
+      rowData.push(`"${cell.textContent.replace(/"/g, '""')}"`);
+    }
+    csv.push(rowData.join(","));
+  }
+  const csvText = csv.join("\n");
+  const blob = new Blob([csvText], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyToClipboard(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+}
+
 function shareResults() {
   const comparisonBody = document.getElementById("comparisonBody");
   const comparisonText = document.getElementById("comparisonText").textContent;
-  let shareText = "7th CPC Pay Fixation Calculator - Western Railway\n\nResult Table\n";
+  let shareText = "7th CPC Pay Fixation Dashboard - Western Railway\n\nPay Fixation Comparison\n";
   for (let row of comparisonBody.children) {
     const cells = row.children;
     shareText += `${cells[0].textContent}: ₹${cells[1].textContent} (${cells[2].textContent})\n`;
@@ -395,17 +533,8 @@ function shareResults() {
     });
   } else {
     copyToClipboard(shareText);
+    alert("Results copied to clipboard!");
   }
-}
-
-function copyToClipboard(text) {
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  document.body.removeChild(textarea);
-  alert("Results copied to clipboard!");
 }
 
 function printResults() {
