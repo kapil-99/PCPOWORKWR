@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>132KV & 25KV Inspection PRO Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --pri:#0066cc; --green:#00c853; --red:#ff1744; --bg:#f8fbff; --card:#fff; --light:#e3f2fd; --text:#222; }
+  [data-theme="dark"] { --bg:#0f0f1a; --card:#16213e; --light:#1e2a4e; --text:#e0e0ff; --pri:#4d94ff; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+  body { background:var(--bg); color:var(--text); transition:0.4s; min-height:100vh; position:relative; }
+  header { background:linear-gradient(135deg, var(--pri) 0%, #0047a3 100%); color:white; padding:18px; text-align:center; font-size:22px; font-weight:700; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+  .theme-toggle { position:absolute; right:15px; top:15px; background:none; border:none; font-size:24px; cursor:pointer; transition:0.3s; }
+  .theme-toggle:hover { transform:scale(1.2); }
+  .container { max-width:1300px; margin:20px auto; padding:10px; opacity:0; transition:opacity 0.6s; }
+  .container.loaded { opacity:1; }
+  .loader { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:60px; height:60px; border:8px solid #f3f3f3; border-top:8px solid var(--pri); border-radius:50%; animation:spin 1s linear infinite; z-index:9999; background:white; box-shadow:0 0 20px rgba(0,102,204,0.4); }
+  @keyframes spin { 0% { transform:translate(-50%,-50%) rotate(0deg); } 100% { transform:translate(-50%,-50%) rotate(360deg); } }
+  .loader-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; z-index:9998; }
+  .top-bar { background:var(--card); padding:15px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); margin-bottom:20px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:center; }
+  .progress { height:8px; background:#ddd; border-radius:4px; overflow:hidden; flex:1; min-width:200px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg, var(--green) 0%, #00a040 100%); width:0%; transition:0.5s; box-shadow:0 0 10px rgba(0,200,83,0.5); }
+  .btn-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:14px; margin:20px 0; }
+  .fbtn { padding:20px; background:var(--light); border:2px solid var(--pri); border-radius:12px; text-align:center; font-weight:600; cursor:pointer; transition:0.3s; box-shadow:0 2px 8px rgba(0,102,204,0.1); }
+  .fbtn:hover, .fbtn.active { background:var(--pri); color:white; transform:translateY(-5px); box-shadow:0 8px 20px rgba(0,102,204,0.3); }
+  .form { display:none; background:var(--card); border-radius:16px; padding:25px; box-shadow:0 8px 25px rgba(0,0,0,0.15); margin-top:20px; }
+  .form.active { display:block; animation:fadeIn 0.5s; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:none;} }
+  table { width:100%; border-collapse:collapse; margin:20px 0; }
+  th, td { border:1px solid #90caf9; padding:14px; text-align:left; vertical-align:top; }
+  th { background:var(--light); color:var(--pri); font-weight:700; text-align:center; }
+  input, select, textarea { width:100%; padding:12px 14px; border:2px solid #90caf9; border-radius:10px; font-size:15px; transition:0.3s; background:var(--card); color:var(--text); }
+  input:focus, select:focus, textarea:focus { border-color:var(--pri); outline:none; box-shadow:0 0 0 3px rgba(0,102,204,0.2); }
+  .error { border-color:var(--red) !important; background:#ffebee !important; box-shadow:0 0 0 3px rgba(255,23,68,0.2) !important; }
+  .error-msg { color:var(--red); font-size:13px; margin-top:5px; display:none; }
+  .error-msg.show { display:block; }
+  .yesno { display:flex; gap:12px; flex-wrap:wrap; }
+  .ybtn { padding:10px 20px; border:2px solid #90caf9; background:white; border-radius:10px; cursor:pointer; font-weight:600; transition:0.3s; }
+  .ybtn:hover { transform:translateY(-2px); }
+  .ybtn.active { background:var(--pri); color:white; border-color:var(--pri); }
+  .triplet, .multi { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:12px; margin:10px 0; }
+  .triplet label, .multi label { font-size:13px; text-align:center; margin-bottom:4px; display:block; }
+  .subtable-wrapper { margin:15px 0; }
+  .subtable-wrapper table th:last-child, .subtable-wrapper table td:last-child { text-align:center; width:80px; }
+  .del-btn { background:var(--red); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; transition:0.3s; }
+  .del-btn:hover { background:#e60032; }
+  .add-row-btn { padding:10px 20px; background:var(--green); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin:10px 0; transition:0.3s; }
+  .add-row-btn:hover { background:#00a040; }
+  .actions { padding:25px 0; text-align:center; display:flex; gap:15px; justify-content:center; flex-wrap:wrap; }
+  .btn { padding:14px 32px; border:none; border-radius:12px; font-weight:700; font-size:16px; cursor:pointer; transition:0.3s; }
+  .btn-p { background:linear-gradient(135deg, var(--pri) 0%, #0047a3 100%); color:white; box-shadow:0 4px 12px rgba(0,102,204,0.3); }
+  .btn-p:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,102,204,0.4); }
+  .btn-s { background:linear-gradient(135deg, var(--green) 0%, #00a040 100%); color:white; box-shadow:0 4px 12px rgba(0,200,83,0.3); }
+  .btn-s:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,200,83,0.4); }
+  .btn-c { background:#ddd; color:#333; }
+  .btn-c:hover { background:#ccc; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .report-header { display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; }
+  .report-header input, .report-header select { flex:1; min-width:200px; }
+  #previewModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:none; justify-content:center; align-items:center; z-index:1000; animation:fadeIn 0.3s; }
+  #previewBox { background:var(--card); padding:30px; border-radius:16px; max-width:90%; max-height:90%; overflow:auto; }
+  .toast { position:fixed; bottom:20px; right:20px; padding:16px 28px; background:var(--green); color:white; border-radius:12px; font-weight:600; z-index:1001; display:none; box-shadow:0 4px 12px rgba(0,200,83,0.4); animation:slideIn 0.3s; }
+  @keyframes slideIn { from{transform:translateX(400px); opacity:0;} to{transform:none; opacity:1;} }
+  .nav-bar { display:flex; justify-content:center; gap:15px; padding:10px; background:var(--card); border-radius:12px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.1); flex-wrap:wrap; }
+  .nav-btn { padding:10px 20px; background:linear-gradient(135deg, var(--pri) 0%, #0047a3 100%); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; transition:0.3s; }
+  .nav-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,102,204,0.3); }
+  .dashboard { display:block; }
+  .division-grid, .form-grid { display:none; }
+  .content-area { width:100%; height:calc(100vh - 200px); overflow:auto; padding:20px; box-sizing:border-box; }
+  .selected-info { text-align:center; color:var(--pri); margin-bottom:20px; font-weight:600; background:var(--light); padding:15px; border-radius:10px; }
+  .group-header { background:var(--light); font-weight:600; }
+  @media (max-width:768px) {
+    .btn-grid { grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); }
+    .actions { flex-direction:column; }
+    .btn { width:100%; }
+  }
+  .record-card {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+.record-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0,102,204,0.2);
+  border-color: var(--pri);
+}
+.card-header {
+  background: linear-gradient(135deg, var(--pri), #0047a3);
+  color: white;
+  padding: 18px;
+  border-radius: 14px 14px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-header h3 { margin: 0; font-size: 20px; }
+.badge { background: rgba(255,255,255,0.3); padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+.card-body { padding: 20px; }
+.card-body p { margin: 8px 0; font-size: 15px; }
+.card-footer {
+  background: var(--light);
+  padding: 12px;
+  text-align: center;
+  border-radius: 0 0 14px 14px;
+  font-size: 14px;
+  color: var(--pri);
+  font-weight: 600;
+}
+#recordsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 10px;
+}
+.sheet-btn { padding:15px; background:#334155; margin:8px 0; border-radius:10px; cursor:pointer; transition:0.3s; }
+.sheet-btn:hover, .sheet-btn.active { background:#06b6d4; transform:translateX(5px); }
+.row-card { padding:14px; background:white; margin:10px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); cursor:pointer; transition:0.3s; border-left:4px solid #06b6d4; }
+.row-card:hover { transform:scale(1.02); box-shadow:0 8px 20px rgba(6,182,212,0.2); }
+</style>
+</head>
+<body>
+<div class="loader-overlay" id="loaderOverlay"></div>
+<div class="loader" id="loader"></div>
+<header>
+  TRD - Inspection Dashboard
+  <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+</header>
+
+<div class="container" id="container">
+  <div class="nav-bar">
+    <button class="nav-btn" onclick="goHome()">🏠 HOME</button>
+    <button class="nav-btn" onclick="goBack()">⬅ Back</button>
+    <button class="nav-btn" onclick="refreshPage()">🔄 Refresh</button>
+    <button class="nav-btn" onclick="viewData()">📊 View Data</button>
+  </div>
+  <div id="dashboard" class="dashboard content-area">
+    <h2 style="text-align:center;color:var(--pri);margin-bottom:30px;">Select Division</h2>
+    <div class="btn-grid" id="divisionButtons"></div>
+  </div>
+  <div id="divisionArea" class="division-grid content-area" style="display:none;">
+    <div class="top-bar">
+      <div>
+        <span id="selectedDivision" style="font-weight:600;color:var(--pri);"></span>
+        <select id="tssSelect" style="margin-left:10px; width:200px;">
+          <option value="">Select TSS</option>
+        </select>
+      </div>
+      <div style="display:flex; align-items:center; gap:15px;">
+        <span>Progress:</span>
+        <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+        <span id="progressText" style="font-weight:600;">0%</span>
+      </div>
+    </div>
+    <h2 style="text-align:center;color:var(--pri);margin:20px 0;">Select Form</h2>
+    <div class="btn-grid" id="formButtons" style="display:none;"></div>
+  </div>
+  <div id="formArea" class="form-grid content-area" style="display:none;"></div>
+</div>
+<div id="previewModal">
+  <div id="previewBox">
+    <h2>Preview - <span id="pTitle" style="color:var(--pri);"></span></h2>
+    <div id="pTable" style="margin:20px 0; max-height:400px; overflow-y:auto;"></div>
+    <div class="actions">
+      <button class="btn btn-s" onclick="submitNow()">✓ Confirm & Submit</button>
+      <button class="btn btn-c" onclick="closePrev()">✎ Edit Again</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<div id="dataModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:none; justify-content:center; align-items:center; z-index:1000;">
+  <div id="dataBox" style="background:var(--card); padding:30px; border-radius:16px; max-width:90%; max-height:90%; overflow:auto;">
+    <h2>📊 Data View</h2>
+    <p>Note: Viewing data requires integration with Google Sheets API or similar. This is a placeholder.</p>
+    <button class="btn btn-c" onclick="closeDataModal()">Close</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="forms-config.js"></script>
+<script>
+  const SHEET_ID = "1eV5AcV03u_8AMTULNSn2kNcREPVXE8XZyO98oae8BGQ";
+const API_KEY = "AIzaSyBkKVtdfFbFfdFE8FqSaUGZvptxj0Fysco";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiGxfY3vIk8uXt-weMY9m5TxRRlWp7zVEERShs34tQk67Y-mPtcw_X34NeVbdWRNVM/exec";
+const DIVISIONS = ["BCT", "BRC", "ADI", "RTM", "RJT", "BVC"];
+const TSS_LIST = {
+  "BCT": ["New"],
+  "BRC": ["New"],
+  "ADI": ["New"],
+  "RTM": ["New"],
+  "RJT": ["New"],
+  "BVC": ["New"]
+};
+let currentDivision = "";
+let currentForm = "";
+let navigationStack = [];
+
+function showLoader() {
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('loaderOverlay').style.display = 'block';
+}
+
+function hideLoader() {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('loaderOverlay').style.display = 'none';
+}
+
+window.onload = function() {
+  showLoader();
+  setTimeout(() => {
+    hideLoader();
+    document.getElementById('container').classList.add('loaded');
+  }, 1500);
+  if (typeof FORM_CONFIG === "undefined") {
+    alert("Error: forms-config.js not loaded! Create the file or check path.");
+    return;
+  }
+  initDivisions();
+  initForms();
+};
+
+function initDivisions() {
+  DIVISIONS.forEach(name => {
+    let b = document.createElement("div");
+    b.className = "fbtn"; 
+    b.textContent = name;
+    b.onclick = () => openDivision(name);
+    document.getElementById("divisionButtons").appendChild(b);
+  });
+}
+
+function initForms() {
+  Object.keys(FORM_CONFIG).forEach(name => {
+    let b = document.createElement("div");
+    b.className = "fbtn"; 
+    b.textContent = "📋 " + name;
+    b.onclick = () => openForm(name);
+    document.getElementById("formButtons").appendChild(b);
+  });
+}
+
+function openDivision(name) {
+  currentDivision = name;
+  navigationStack.push('division');
+  document.getElementById("selectedDivision").textContent = " Division: " + name;
+  let tssSel = document.getElementById("tssSelect");
+  tssSel.innerHTML = '<option value="">Select TSS</option>';
+  TSS_LIST[name].forEach(t => {
+    let opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    tssSel.appendChild(opt);
+  });
+  document.getElementById("formButtons").style.display = "none";
+  tssSel.onchange = () => {
+    if (tssSel.value) {
+      document.getElementById("formButtons").style.display = "grid";
+    } else {
+      document.getElementById("formButtons").style.display = "none";
+    }
+  };
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("divisionArea").style.display = "block";
+  document.getElementById("formArea").style.display = "none";
+}
+
+function openForm(name) {
+  currentForm = name;
+  navigationStack.push('form');
+  document.querySelectorAll("#formButtons .fbtn").forEach(x => x.classList.remove("active"));
+  event.target.classList.add("active");
+  const tss = document.getElementById("tssSelect").value;
+  const selectedText = `✓ ${currentDivision} Division | ${tss} TSS | ${name}`;
+  const config = FORM_CONFIG[name];
+  let html = `<div class="form active">
+    <h2 style="text-align:center;color:var(--pri);margin-bottom:20px;">📋 ${name}</h2>
+    <p class="selected-info">${selectedText}</p>
+    <div class="report-header">
+      <input type="text" id="reportNo" placeholder="Report No (e.g. REP-2025-001)" data-key="Report No" data-required="true">
+      <input type="date" id="reportDate" data-key="Report Date" data-required="true">
+    </div>
+    <table><thead><tr><th>Sr</th><th>Description</th><th>Details</th></tr></thead><tbody>`;
+
+  config.forEach(field => {
+    if (field.type === "group") {
+      html += `<tr class="group-header"><td>${field.sr}</td><td colspan="2">${field.label}${field.required ? ' *' : ''}</td></tr>`;
+      field.fields.forEach(sub => {
+        html += `<tr><td style="text-align:center;">${sub.sr}</td><td>${sub.label}${sub.required ? ' *' : ''}</td><td>${createField(sub, field.label)}${createErrorMsg(sub)}</td></tr>`;
+      });
+    } else {
+      html += `<tr><td style="text-align:center;">${field.sr}</td><td>${field.label}${field.required ? ' *' : ''}</td><td>${createField(field)}${createErrorMsg(field)}</td></tr>`;
+    }
+  });
+
+  html += `</tbody></table>
+    <div class="actions">
+      <button class="btn btn-c" onclick="clearForm('${name}')">🔄 Clear</button>
+      <button class="btn btn-p" id="previewBtn" onclick="preview()">👁 Preview</button>
+      <button class="btn btn-s" id="submitBtn" style="display:none;" onclick="submitNow()">✈ Submit Now</button>
+    </div>
+  </div>`;
+  document.getElementById("formArea").innerHTML = html;
+  addValidationListeners();
+  checkFormValidity();
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("divisionArea").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+}
+
+function createField(field, groupLabel = "") {
+  let reqAttr = field.required ? 'data-required="true"' : '';
+  const fullLabel = groupLabel ? `${groupLabel} - ${field.label}` : field.label;
+
+  // 1. Checkbox
+  if (field.type === "checkbox") {
+    const keyAttr = `data-key="${fullLabel}"`;
+    return `<label><input type="checkbox" ${keyAttr} ${reqAttr}> ${field.placeholder || field.label}</label>`;
+  }
+
+  // 2. Yes/No/NA
+  if (field.type === "yesno") {
+    const keyAttr = `data-key="${fullLabel}"`;
+    return `<div class="yesno">
+      <button type="button" class="ybtn" onclick="setYesNo(this,'Yes')">Yes</button>
+      <button type="button" class="ybtn" onclick="setYesNo(this,'No')">No</button>
+      <button type="button" class="ybtn" onclick="setYesNo(this,'NA')">NA</button>
+      <input type="hidden" ${keyAttr} ${reqAttr}>
+      <div class="error-msg">Required</div>
+    </div>`;
+  }
+
+  // 3. Dropdown
+  if (field.type === "dropdown") {
+    const keyAttr = `data-key="${fullLabel}"`;
+    const opts = field.options.map(o => `<option value="${o}">${o}</option>`).join('');
+    return `<select ${keyAttr} ${reqAttr}><option value="">Select</option>${opts}</select><div class="error-msg">Required</div>`;
+  }
+
+  // 4. Textarea
+  if (field.type === "textarea") {
+    const keyAttr = `data-key="${fullLabel}"`;
+    const max = field.max ? `maxlength="${field.max}"` : '';
+    return `<textarea ${keyAttr} ${max} ${reqAttr} placeholder="${field.placeholder || ''}"></textarea><div class="error-msg">Required</div>`;
+  }
+
+  // 5. Simple Number Field
+  if (field.type === "number" && !field.count) {
+    const keyAttr = `data-key="${fullLabel}"`;
+    let attrs = `type="number"`;
+    if (field.min !== undefined) attrs += ` min="${field.min}" data-min="${field.min}"`;
+    if (field.max !== undefined) attrs += ` max="${field.max}" data-max="${field.max}"`;
+    const unit = field.unit ? ` <span style="color:#0066cc; font-weight:600;">${field.unit}</span>` : '';
+    return `<div style="display:flex; align-items:center; gap:8px;">
+              <input ${attrs} ${keyAttr} ${reqAttr} placeholder="${field.placeholder || ''}">
+              ${unit}
+            </div><div class="error-msg">Required</div>`;
+  }
+
+  // 6. MULTI FIELD (Sabse Important – Ab Full Power!)
+  if (field.type === "multi") {
+    let html = `<div class="multi">`;
+    for (let i = 0; i < field.count; i++) {
+      const lbl = field.labels[i] || `Value ${i+1}`;
+      const subLabel = `${fullLabel} (${lbl})`;  // ← Perfect column name banega
+      let inputAttrs = `type="number" data-key="${subLabel}" ${reqAttr}`;
+      
+      if (field.min !== undefined) inputAttrs += ` min="${field.min}" data-min="${field.min}"`;
+      if (field.max !== undefined) inputAttrs += ` max="${field.max}" data-max="${field.max}"`;
+      
+      const unit = field.unit ? `<span style="margin-left:4px; color:#0066cc; font-weight:600;">${field.unit}</span>` : '';
+      
+      html += `
+        <div>
+          <label style="font-size:13px; text-align:center;">${lbl}</label>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <input ${inputAttrs} placeholder="${field.placeholder || ''}">
+            ${unit}
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+    if (field.required) html += `<div class="error-msg">All fields required</div>`;
+    return html;
+  }
+
+  // 7. Default Text Field
+  const keyAttr = `data-key="${fullLabel}"`;
+  const maxLen = field.max ? `maxlength="${field.max}" data-maxlen="${field.max}"` : '';
+  const unit = field.unit ? ` <span style="color:#0066cc; font-weight:600;">${field.unit}</span>` : '';
+  
+  return `<div style="display:flex; align-items:center; gap:8px;">
+            <input type="text" ${maxLen} ${keyAttr} ${reqAttr} placeholder="${field.placeholder || ''}">
+            ${unit}
+          </div><div class="error-msg">Required</div>`;
+}
+
+function createErrorMsg(field) {
+  let msg = field.required ? 'Required' : '';
+  return `<div class="error-msg">${msg}</div>`;
+}
+
+function setYesNo(btn, val) {
+  btn.parentNode.querySelectorAll(".ybtn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  btn.parentNode.querySelector("input[type=hidden]").value = val;
+  checkFormValidity();
+}
+
+function addValidationListeners() {
+  document.querySelectorAll("input, textarea, select").forEach(el => {
+    el.addEventListener("input", checkFormValidity);
+    el.addEventListener("change", checkFormValidity);
+    el.addEventListener("blur", checkFormValidity);
+  });
+  document.querySelectorAll("input[type=checkbox]").forEach(c => c.addEventListener("change", checkFormValidity));
+}
+
+function checkFormValidity() {
+  let hasError = false;
+  document.querySelectorAll("[data-key]").forEach(el => {
+    let val = el.type === "checkbox" ? el.checked : el.value?.trim();
+    let isValid = true;
+    const isRequired = el.dataset.required === "true";
+    if (isRequired && !val && el.type !== "hidden") isValid = false;
+    if (el.type === "number" && val) {
+      let num = parseFloat(val);
+      if (el.dataset.min && num < parseFloat(el.dataset.min)) isValid = false;
+      if (el.dataset.max && num > parseFloat(el.dataset.max)) isValid = false;
+    }
+    if (el.dataset.maxlen && val && val.length > parseInt(el.dataset.maxlen)) isValid = false;
+    const wrapper = el.closest('td') || el.parentNode;
+    const errorEl = wrapper.querySelector(".error-msg");
+    if (!isValid) {
+      el.classList.add("error");
+      if (errorEl) errorEl.classList.add("show");
+      hasError = true;
+    } else {
+      el.classList.remove("error");
+      if (errorEl) errorEl.classList.remove("show");
+    }
+  });
+  document.querySelectorAll(".yesno").forEach(g => {
+    const input = g.querySelector("input[type=hidden]");
+    const isRequired = input.dataset.required === "true";
+    if (isRequired && !input.value) {
+      g.querySelectorAll(".ybtn").forEach(b => b.style.borderColor = "var(--red)");
+      hasError = true;
+    } else {
+      g.querySelectorAll(".ybtn").forEach(b => b.style.borderColor = "#90caf9");
+    }
+  });
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) submitBtn.style.display = hasError ? "none" : "inline-block";
+  const previewBtn = document.getElementById("previewBtn");
+  if (previewBtn) previewBtn.disabled = hasError;
+  updateProgress();
+}
+
+function updateProgress() {
+  let total = document.querySelectorAll("[data-key]").length;
+  let filled = 0;
+  document.querySelectorAll("[data-key]").forEach(el => {
+    let val = el.type === "checkbox" ? el.checked : el.value.trim();
+    if (val) filled++;
+  });
+  let pct = total ? Math.round((filled/total)*100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressText").textContent = pct + "%";
+}
+
+function getAllData() {
+  let data = {
+    "Equipment": currentForm,
+    "Division": currentDivision,
+    "TSS": document.getElementById("tssSelect")?.value || "",
+    "Report No": document.getElementById("reportNo")?.value || "",
+    "Report Date": document.getElementById("reportDate")?.value || "",
+    "Submitted": new Date().toLocaleString("en-IN")
+  };
+  document.querySelectorAll("[data-key]").forEach(el => {
+    let val = el.type === "checkbox" ? (el.checked ? "Yes" : "No") : el.value;
+    if (val) data[el.dataset.key] = val;
+  });
+  return data;
+}
+
+function preview() {
+  checkFormValidity();
+  if (document.getElementById("submitBtn").style.display === "none") {
+    toast("❌ Please fix all errors first!");
+    return;
+  }
+  let data = getAllData();
+  document.getElementById("pTitle").textContent = currentForm;
+  let table = '<table style="width:100%;border-collapse:collapse;">';
+  for (let k in data) {
+    table += `<tr><td style="border:1px solid #90caf9;padding:12px;background:var(--light);"><strong>${k}</strong></td>
+              <td style="border:1px solid #90caf9;padding:12px;">${data[k]}</td></tr>`;
+  }
+  table += '</table>';
+  document.getElementById("pTable").innerHTML = table;
+  document.getElementById("previewModal").style.display = "flex";
+  window.finalData = data;
+}
+
+function closePrev() { document.getElementById("previewModal").style.display = "none"; }
+
+async function submitNow() {
+  showLoader();
+  let payload = {
+    formName: currentForm.replace(/[^a-zA-Z0-9]/g, "_"),
+    rows: [window.finalData],
+    order: Object.keys(window.finalData)
+  };
+  try {
+    let res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
+    let json = await res.json();
+    if (json.result === "success") {
+      toast("✅ Submitted Successfully!");
+      confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
+      closePrev();
+      setTimeout(() => {
+        hideLoader();
+        location.reload();
+      }, 2500);
+    } else {
+      hideLoader();
+      toast("❌ Error: " + (json.message || "Try again"));
+    }
+  } catch (e) {
+    hideLoader();
+    toast("❌ Network Error! Check WEB_APP_URL.");
+  }
+}
+
+function toast(msg) {
+  let t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 4000);
+}
+
+function clearForm(name) {
+  openForm(name);
+}
+
+function goHome() {
+  navigationStack = [];
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("divisionArea").style.display = "none";
+  document.getElementById("formArea").style.display = "none";
+  currentDivision = "";
+  currentForm = "";
+}
+
+function goBack() {
+  if (navigationStack.length === 0) return;
+  const last = navigationStack.pop();
+  if (last === 'form') {
+    openDivision(currentDivision);
+  } else if (last === 'division') {
+    goHome();
+  }
+}
+
+function refreshPage() {
+  location.reload();
+}
+
+function viewData() {
+  document.getElementById("dataModal").style.display = "flex";
+}
+
+function closeDataModal() {
+  document.getElementById("dataModal").style.display = "none";
+}
+
+function toggleTheme() {
+  document.body.hasAttribute("data-theme") ?
+    document.body.removeAttribute("data-theme") :
+    document.body.setAttribute("data-theme", "dark");
+}
+// ================== ULTIMATE PROFESSIONAL VIEW DATA ==================
+async function viewData() {
+  showLoader();
+
+  const SHEET_ID = "1eV5AcV03u_8AMTULNSn2kNcREPVXE8XZyO98oae8BGQ";
+  const API_KEY = "AIzaSyBkKVtdfFbFfdFE8FqSaUGZvptxj0Fysco";
+
+  try {
+    // 1. Sab sheets ke naam le lo
+    const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?key=${API_KEY}`);
+    const meta = await metaRes.json();
+    const sheets = meta.sheets.map(s => s.properties.title).filter(t => !t.startsWith("_") && !t.toLowerCase().includes("template"));
+
+    let allData = {};
+
+    // 2. Har sheet ka data load karo
+    for (let sheet of sheets) {
+      const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheet)}!A1:ZZ1000?key=${API_KEY}`);
+      const data = await res.json();
+      if (data.values && data.values.length > 1) {
+        const headers = data.values[0];
+        allData[sheet] = data.values.slice(1).map((row, i) => {
+          let obj = { _row: i + 2 };
+          headers.forEach((h, j) => obj[h] = row[j] || "");
+          return obj;
+        });
+      } else {
+        allData[sheet] = [];
+      }
+    }
+
+    // 3. Full Screen View
+    document.body.innerHTML += `
+      <div id="proView" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;color:white;z-index:9999;display:flex;">
+        
+        <!-- Left: Sheet Names (Chhota) -->
+        <div style="width:30%;background:#1e293b;padding:20px;overflow-y:auto;border-right:4px solid #06b6d4;">
+          <h2 style="text-align:center;color:#06b6d4;margin-bottom:20px;">Forms</h2>
+          <div id="sheetList">
+            ${sheets.map(sheet => `
+              <div class="sheet-btn ${sheet === sheets[0] ? 'active' : ''}" 
+                   onclick="loadSheet('${sheet}')">
+                ${sheet} <span style="float:right;">${allData[sheet].length}</span>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <!-- Right: Data List + Form View -->
+        <div style="width:70%;background:#f1f5f9;color:#000;display:flex;flex-direction:column;">
+          <div style="background:#fff;padding:15px;box-shadow:0 4px 20px rgba(0,0,0,0.1);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;">
+            <h2 id="currentSheetTitle" style="color:#06b6d4;margin:0;">${sheets[0]}</h2>
+            <button class="btn btn-c" onclick="closeProView()" style="background:#ef4444;">Close</button>
+          </div>
+
+          <div style="flex:1;overflow:auto;display:flex;">
+            <!-- Rows List (Middle) -->
+            <div id="rowsList" style="width:40%;background:#fff;border-right:2px solid #e2e8f0;overflow-y:auto;padding:10px;">
+              ${allData[sheets[0]].map((row, i) => `
+                <div class="row-card" onclick="showFormView('${sheets[0]}', ${i})">
+                  <strong>${row["Report No"] || "Entry " + (i+1)}</strong><br>
+                  <small>${row["Division"] || ""} • ${row["TSS"] || ""} • ${row["Report Date"] || ""}</small>
+                </div>
+              `).join("")}
+            </div>
+
+            <!-- Form View (Right) -->
+            <div id="formViewArea" style="width:60%;padding:20px;overflow-y:auto;background:#f8fafc;">
+              <p style="text-align:center;color:#666;">Select a row to view details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    window.proViewData = allData;
+    loadSheet(sheets[0]); // First sheet auto load
+    hideLoader();
+
+  } catch (e) {
+    hideLoader();
+    toast("Error loading data!");
+    console.error(e);
+  }
+}
+
+function loadSheet(sheetName) {
+  document.querySelectorAll(".sheet-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.sheet-btn[onclick="loadSheet('${sheetName}')"]`).classList.add("active");
+  document.getElementById("currentSheetTitle").textContent = sheetName;
+
+  const rows = window.proViewData[sheetName];
+  document.getElementById("rowsList").innerHTML = rows.length ? rows.map((row, i) => `
+    <div class="row-card" onclick="showFormView('${sheetName}', ${i})">
+      <strong>${row["Report No"] || "Entry " + (i+1)}</strong><br>
+      <small>${row["Division"] || ""} • ${row["TSS"] || ""} • ${row["Report Date"] || ""}</small>
+    </div>
+  `).join("") : "<p style='text-align:center;padding:50px;color:#999;'>No data</p>";
+}
+
+function showFormView(sheetName, rowIndex) {
+  const row = window.proViewData[sheetName][rowIndex];
+  const formName = row["Equipment"] || sheetName;
+
+  let html = `<div class="form active" style="background:white;padding:25px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.1);">`;
+  html += `<h2 style="text-align:center;color:#06b6d4;margin-bottom:20px;">${formName}</h2>`;
+  html += `<p class="selected-info">Report No: ${row["Report No"] || "—"} | Date: ${row["Report Date"] || "—"} | Division: ${row["Division"] || "—"} | TSS: ${row["TSS"] || "—"}</p>`;
+
+  if (FORM_CONFIG && FORM_CONFIG[formName]) {
+    html += `<table style="width:100%;border-collapse:collapse;"><thead>
+      <tr style="background:#e0f2fe;">
+        <th style="padding:12px;border:1px solid #90caf9;text-align:center;">Sr</th>
+        <th style="padding:12px;border:1px solid #90caf9;">Description</th>
+        <th style="padding:12px;border:1px solid #90caf9;">Value</th>
+        <th style="padding:12px;border:1px solid #90caf9;background:#fff3cd;color:#856404;">Guidelines</th>
+      </tr></thead><tbody>`;
+
+    FORM_CONFIG[formName].forEach(field => {
+      if (field.type === "group") {
+        html += `<tr class="group-header" style="background:#06b6d4;color:white;">
+          <td>${field.sr}</td><td colspan="3">${field.label}</td>
+        </tr>`;
+        field.fields.forEach(sub => {
+          const key = sub.label.includes(" - ") ? sub.label : `${field.label} - ${sub.label}`;
+          const val = row[key] || row[sub.label] || "—";
+          const guide = [
+            sub.placeholder ? `Hint: ${sub.placeholder}` : "",
+            sub.min !== undefined ? `Min: ${sub.min}` : "",
+            sub.max !== undefined ? `Max: ${sub.max}` : "",
+            sub.unit ? `Unit: ${sub.unit}` : ""
+          ].filter(x => x).join(" | ") || "—";
+
+          html += `<tr>
+            <td style="text-align:center;">${sub.sr}</td>
+            <td style="padding:12px;border:1px solid #ddd;">${sub.label}</td>
+            <td style="padding:12px;border:1px solid #ddd;font-weight:600;">${displayValue(val)}</td>
+            <td style="padding:12px;border:1px solid #ddd;font-size:13px;background:#fff8e1;">${guide}</td>
+          </tr>`;
+        });
+      } else {
+        const val = row[field.label] || "—";
+        const guide = [
+          field.placeholder ? `Hint: ${field.placeholder}` : "",
+          field.min !== undefined ? `Min: ${field.min}` : "",
+          field.max !== undefined ? `Max: ${field.max}` : "",
+          field.unit ? `Unit: ${field.unit}` : ""
+        ].filter(x => x).join(" | ") || "—";
+
+        html += `<tr>
+          <td style="text-align:center;">${field.sr}</td>
+          <td style="padding:12px;border:1px solid #ddd;">${field.label}</td>
+          <td style="padding:12px;border:1px solid #ddd;font-weight:600;">${displayValue(val)}</td>
+          <td style="padding:12px;border:1px solid #ddd;font-size:13px;background:#fff8e1;">${guide}</td>
+        </tr>`;
+      }
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  document.getElementById("formViewArea").innerHTML = html;
+}
+
+function displayValue(val) {
+  if (!val || val === "—") return "—";
+  if (typeof val === "string" && val.match(/https?:\/\/.*\.(jpg|jpeg|png|gif|webp)/i)) {
+    return `<img src="${val}" style="max-width:100%;max-height:400px;border-radius:12px;margin:10px 0;box-shadow:0 4px 15px rgba(0,0,0,0.2);">`;
+  }
+  return val;
+}
+
+function closeProView() {
+  document.getElementById("proView")?.remove();
+}
+
+function closeDataModal() {
+  document.getElementById("dataModal").style.display = "none";
+}
+
+function closeDataModal() {
+  document.getElementById("dataModal").style.display = "none";
+}
+setInterval(() => { if(currentForm) { checkFormValidity(); updateProgress(); } }, 1000);
+</script>
+</body>
+</html>
